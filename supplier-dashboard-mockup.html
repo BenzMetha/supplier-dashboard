@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supplier Dashboard — Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1115;
+    --surface: #181b22;
+    --surface-2: #1f232c;
+    --border: #2a2f3a;
+    --text: #e8eaed;
+    --text-dim: #9aa0a8;
+    --text-mute: #6b7280;
+    --accent: #d4ff3a;
+    --warn: #ff8c42;
+    --danger: #ff4757;
+    --success: #4ade80;
+    --info: #60a5fa;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'IBM Plex Sans Thai', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* ===== Page tabs (mockup navigator) ===== */
+  .page-nav {
+    position: sticky;
+    top: 0;
+    background: #0a0c10;
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    z-index: 100;
+    overflow-x: auto;
+  }
+  .page-nav-label {
+    font-size: 11px;
+    color: var(--text-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-right: 8px;
+    white-space: nowrap;
+  }
+  .page-tab {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+  .page-tab:hover { color: var(--text); border-color: #3a4050; }
+  .page-tab.active {
+    background: var(--accent);
+    color: #0a0c10;
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* ===== App shell ===== */
+  .app { display: flex; min-height: calc(100vh - 53px); }
+  .sidebar {
+    width: 220px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+    flex-shrink: 0;
+  }
+  .logo {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo-dot {
+    width: 10px; height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+  .nav-section { font-size: 11px; color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.1em; margin: 20px 0 8px 8px; }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 13.5px;
+    margin-bottom: 2px;
+  }
+  .nav-item:hover { background: var(--surface-2); color: var(--text); }
+  .nav-item.active { background: var(--surface-2); color: var(--text); }
+  .nav-item.active::before {
+    content: '';
+    width: 3px;
+    height: 16px;
+    background: var(--accent);
+    border-radius: 2px;
+    margin-left: -12px;
+    margin-right: 9px;
+  }
+
+  .main { flex: 1; padding: 28px 36px; max-width: calc(100vw - 220px); overflow-x: hidden; }
+
+  /* ===== Common ===== */
+  .page { display: none; }
+  .page.active { display: block; }
+  .page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
+  .page-title { font-size: 24px; font-weight: 700; }
+  .page-sub { color: var(--text-dim); font-size: 13px; margin-top: 4px; }
+  .btn {
+    background: var(--accent);
+    color: #0a0c10;
+    border: none;
+    padding: 9px 18px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .btn-secondary { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
+  .btn-ghost { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
+
+  /* ===== Alert banner ===== */
+  .alerts {
+    background: linear-gradient(135deg, rgba(255,140,66,0.08), rgba(255,71,87,0.04));
+    border: 1px solid rgba(255,140,66,0.3);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+  }
+  .alert-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: var(--warn);
+    margin-bottom: 12px;
+    font-size: 13px;
+  }
+  .alert-list { display: flex; flex-direction: column; gap: 8px; }
+  .alert-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    padding: 6px 0;
+  }
+  .alert-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--warn); flex-shrink: 0; }
+  .alert-dot.danger { background: var(--danger); }
+  .alert-meta { color: var(--text-mute); margin-left: auto; font-size: 12px; }
+
+  /* ===== Stats ===== */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .stat-label { font-size: 11px; color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.08em; }
+  .stat-value { font-size: 28px; font-weight: 700; margin-top: 6px; }
+  .stat-foot { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+  .stat-value .small { font-size: 14px; color: var(--text-dim); margin-left: 4px; font-weight: 400; }
+
+  /* ===== Filter row ===== */
+  .filter-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12.5px;
+    color: var(--text-dim);
+    cursor: pointer;
+  }
+  .chip.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .search {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 12px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13px;
+    width: 240px;
+  }
+
+  /* ===== Project card grid ===== */
+  .project-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .project-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .project-card:hover { border-color: #3a4050; }
+  .pc-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+  .pc-title { font-size: 15px; font-weight: 600; }
+  .pc-client { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+  .status-badge {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .status-draft { background: rgba(154,160,168,0.15); color: var(--text-dim); }
+  .status-sent { background: rgba(96,165,250,0.15); color: var(--info); }
+  .status-sample { background: rgba(168,85,247,0.15); color: #c084fc; }
+  .status-approved { background: rgba(74,222,128,0.15); color: var(--success); }
+  .status-producing { background: rgba(212,255,58,0.15); color: var(--accent); }
+  .status-qc { background: rgba(255,140,66,0.15); color: var(--warn); }
+  .status-delivered { background: rgba(74,222,128,0.2); color: var(--success); }
+
+  .pc-progress { display: flex; gap: 2px; margin: 14px 0 10px; height: 6px; }
+  .pc-progress-seg { flex: 1; background: var(--surface-2); border-radius: 2px; }
+  .pc-progress-seg.done { background: var(--success); }
+  .pc-progress-seg.current { background: var(--accent); }
+  .pc-progress-seg.late { background: var(--warn); }
+
+  .pc-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-dim); margin-top: 8px; }
+  .pc-meta strong { color: var(--text); font-weight: 500; }
+
+  /* ===== Project detail ===== */
+  .breadcrumb { font-size: 12px; color: var(--text-mute); margin-bottom: 8px; }
+  .breadcrumb a { color: var(--text-dim); text-decoration: none; }
+  .detail-header {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .dh-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+  .dh-title { font-size: 22px; font-weight: 700; }
+  .dh-info { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .dh-info-item { }
+  .dh-info-label { font-size: 11px; color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.08em; }
+  .dh-info-val { font-size: 14px; margin-top: 4px; font-weight: 500; }
+
+  /* ===== Products table ===== */
+  .section-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+
+  .product-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .product-head {
+    display: grid;
+    grid-template-columns: 60px 1fr 100px 100px 1fr 30px;
+    gap: 16px;
+    padding: 14px 20px;
+    align-items: center;
+    cursor: pointer;
+  }
+  .product-img {
+    width: 48px; height: 48px;
+    background: var(--surface-2);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-mute);
+    font-size: 10px;
+  }
+  .product-name { font-weight: 600; font-size: 14px; }
+  .product-spec { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+  .product-qty { font-size: 13px; }
+  .product-qty-label { font-size: 11px; color: var(--text-mute); }
+  .product-progress-mini { display: flex; gap: 2px; height: 4px; }
+  .product-progress-mini .pc-progress-seg { background: var(--surface-2); }
+  .expand-icon { color: var(--text-mute); font-size: 12px; }
+
+  .steps-table {
+    border-top: 1px solid var(--border);
+    background: rgba(0,0,0,0.15);
+  }
+  .steps-row {
+    display: grid;
+    grid-template-columns: 30px 1fr 1.2fr 1fr 1fr 90px 120px;
+    gap: 12px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+    font-size: 13px;
+  }
+  .steps-row:last-child { border-bottom: none; }
+  .steps-row.header { font-size: 11px; color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.08em; padding: 10px 20px; }
+  .step-num {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--surface-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .step-num.done { background: var(--success); color: #0a0c10; }
+  .step-num.current { background: var(--accent); color: #0a0c10; }
+  .step-num.late { background: var(--warn); color: #0a0c10; }
+  .days-cell { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .days-late { color: var(--warn); font-weight: 600; }
+  .days-ontime { color: var(--success); }
+  .assignee {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .avatar {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--info);
+    color: #0a0c10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  /* ===== Create project form ===== */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 12px; color: var(--text-dim); margin-bottom: 6px; display: block; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 13px;
+  }
+  .form-textarea { min-height: 60px; resize: vertical; }
+  .card-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .file-drop {
+    border: 1.5px dashed var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+  .product-form-block {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .product-form-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .step-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 1fr 80px 30px;
+    gap: 10px;
+    margin-bottom: 8px;
+    align-items: center;
+  }
+  .step-form-head {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 1fr 80px 30px;
+    gap: 10px;
+    font-size: 11px;
+    color: var(--text-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+  .add-link {
+    color: var(--accent);
+    font-size: 13px;
+    cursor: pointer;
+    margin-top: 8px;
+    display: inline-block;
+  }
+  .remove-x { color: var(--text-mute); cursor: pointer; text-align: center; }
+
+  /* ===== Factory list ===== */
+  .factory-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .factory-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    cursor: pointer;
+  }
+  .factory-card:hover { border-color: #3a4050; }
+  .factory-name { font-weight: 600; font-size: 15px; }
+  .factory-type { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+  .factory-rating { display: flex; align-items: center; gap: 4px; margin-top: 10px; font-size: 13px; }
+  .star { color: var(--accent); }
+  .factory-stats { display: flex; gap: 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .factory-stat-num { font-size: 16px; font-weight: 600; }
+  .factory-stat-lab { font-size: 11px; color: var(--text-mute); }
+
+  /* ===== Factory detail ===== */
+  .factory-detail-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; }
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .table th, .table td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+  .table th { font-size: 11px; color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; }
+  .table tr:last-child td { border-bottom: none; }
+
+  .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .info-row:last-child { border-bottom: none; }
+  .info-row-key { color: var(--text-dim); }
+  .info-row-val { color: var(--text); font-weight: 500; }
+
+  /* ===== Caption (mockup notes) ===== */
+  .caption {
+    background: rgba(212,255,58,0.06);
+    border-left: 3px solid var(--accent);
+    padding: 10px 14px;
+    margin-bottom: 20px;
+    font-size: 12.5px;
+    color: var(--text-dim);
+    border-radius: 0 6px 6px 0;
+  }
+  .caption strong { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- Page Navigator (mockup-only) -->
+<div class="page-nav">
+  <span class="page-nav-label">Mockup pages:</span>
+  <button class="page-tab active" onclick="showPage('dashboard', this)">1. Dashboard</button>
+  <button class="page-tab" onclick="showPage('project', this)">2. Project Detail</button>
+  <button class="page-tab" onclick="showPage('create', this)">3. Create Project</button>
+  <button class="page-tab" onclick="showPage('factory', this)">4. Factory Database</button>
+  <button class="page-tab" onclick="showPage('factory-detail', this)">5. Factory Detail</button>
+</div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo"><span class="logo-dot"></span>SupplyHub</div>
+    <div class="nav-section">Main</div>
+    <div class="nav-item active">▦ Dashboard</div>
+    <div class="nav-item">+ Create Project</div>
+    <div class="nav-section">Database</div>
+    <div class="nav-item">⛁ Factories</div>
+    <div class="nav-item">⛀ Products</div>
+    <div class="nav-section">Team</div>
+    <div class="nav-item">◷ Activity</div>
+    <div class="nav-item">⚙ Settings</div>
+  </aside>
+
+  <main class="main">
+
+    <!-- =================== PAGE 1: DASHBOARD =================== -->
+    <div class="page active" id="page-dashboard">
+      <div class="caption"><strong>หน้า 1 — Dashboard (Home):</strong> ภาพรวม project + alert ของ step ที่ค้างเกินกำหนด</div>
+
+      <div class="page-header">
+        <div>
+          <div class="page-title">Dashboard</div>
+          <div class="page-sub">ภาพรวม project ทั้งหมด · อัพเดทล่าสุด 13 พ.ค. 2026, 10:24</div>
+        </div>
+        <button class="btn">+ Project ใหม่</button>
+      </div>
+
+      <!-- Alert banner -->
+      <div class="alerts">
+        <div class="alert-head">⚠ ต้องตามต่อ — 3 รายการค้างเกินกำหนด</div>
+        <div class="alert-list">
+          <div class="alert-item">
+            <span class="alert-dot danger"></span>
+            <span><strong>SS26 Tee Drop</strong> / เสื้อยืดโลโก้กลาง / step สกรีน (โรงงาน Inkwell)</span>
+            <span class="alert-meta mono">ค้าง 5 วัน · กำหนด 2 วัน</span>
+          </div>
+          <div class="alert-item">
+            <span class="alert-dot"></span>
+            <span><strong>Capsule FW25</strong> / กางเกงขาสั้น / step ทำตัวอย่าง (โรงงาน Threadline)</span>
+            <span class="alert-meta mono">ค้าง 4 วัน · กำหนด 3 วัน</span>
+          </div>
+          <div class="alert-item">
+            <span class="alert-dot"></span>
+            <span><strong>SS26 Tee Drop</strong> / หมวกแก๊ป / step ส่งโรงงาน (โรงงาน CapWorks)</span>
+            <span class="alert-meta mono">ค้าง 3 วัน · กำหนด 1 วัน</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-label">Active Projects</div>
+          <div class="stat-value">8</div>
+          <div class="stat-foot">+2 จากเดือนก่อน</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">สินค้ารวมในระบบ</div>
+          <div class="stat-value">47</div>
+          <div class="stat-foot">23 ชิ้นอยู่ระหว่างผลิต</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">ต้องตามต่อ</div>
+          <div class="stat-value" style="color: var(--warn);">3</div>
+          <div class="stat-foot">1 รายการเร่งด่วน</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Deadline ใกล้สุด</div>
+          <div class="stat-value">7<span class="small">วัน</span></div>
+          <div class="stat-foot">SS26 Tee Drop · 20 พ.ค.</div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filter-row">
+        <input class="search" placeholder="🔍 ค้นหา project, ลูกค้า, สินค้า...">
+        <div class="chip active">ทั้งหมด</div>
+        <div class="chip">กำลังดำเนินการ</div>
+        <div class="chip">ต้องตามต่อ</div>
+        <div class="chip">ใกล้ deadline</div>
+        <div class="chip">เสร็จสิ้น</div>
+      </div>
+
+      <!-- Project grid -->
+      <div class="project-grid">
+
+        <div class="project-card">
+          <div class="pc-head">
+            <div>
+              <div class="pc-title">SS26 Tee Drop</div>
+              <div class="pc-client">ลูกค้า: Loom & Co. · 4 สินค้า</div>
+            </div>
+            <div class="status-badge status-qc">QC</div>
+          </div>
+          <div class="pc-progress">
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg late"></div>
+            <div class="pc-progress-seg"></div>
+          </div>
+          <div class="pc-meta">
+            <span>Deadline: <strong>20 พ.ค. 2026</strong> · เหลือ 7 วัน</span>
+            <span style="color: var(--warn);">⚠ ค้าง 2 step</span>
+          </div>
+        </div>
+
+        <div class="project-card">
+          <div class="pc-head">
+            <div>
+              <div class="pc-title">Capsule FW25</div>
+              <div class="pc-client">ลูกค้า: North Atelier · 6 สินค้า</div>
+            </div>
+            <div class="status-badge status-sample">ทำตัวอย่าง</div>
+          </div>
+          <div class="pc-progress">
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg late"></div>
+            <div class="pc-progress-seg"></div>
+            <div class="pc-progress-seg"></div>
+            <div class="pc-progress-seg"></div>
+            <div class="pc-progress-seg"></div>
+          </div>
+          <div class="pc-meta">
+            <span>Deadline: <strong>15 มิ.ย. 2026</strong> · เหลือ 33 วัน</span>
+            <span style="color: var(--warn);">⚠ ค้าง 1 step</span>
+          </div>
+        </div>
+
+        <div class="project-card">
+          <div class="pc-head">
+            <div>
+              <div class="pc-title">Pop-up Bangkok</div>
+              <div class="pc-client">ลูกค้า: Internal · 12 สินค้า</div>
+            </div>
+            <div class="status-badge status-producing">ผลิตจริง</div>
+          </div>
+          <div class="pc-progress">
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg current"></div>
+            <div class="pc-progress-seg"></div>
+            <div class="pc-progress-seg"></div>
+          </div>
+          <div class="pc-meta">
+            <span>Deadline: <strong>2 ก.ค. 2026</strong> · เหลือ 50 วัน</span>
+            <span style="color: var(--success);">on track</span>
+          </div>
+        </div>
+
+        <div class="project-card">
+          <div class="pc-head">
+            <div>
+              <div class="pc-title">Tote Bag Reorder</div>
+              <div class="pc-client">ลูกค้า: Mellow Mart · 2 สินค้า</div>
+            </div>
+            <div class="status-badge status-approved">อนุมัติ</div>
+          </div>
+          <div class="pc-progress">
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg current"></div>
+            <div class="pc-progress-seg"></div>
+            <div class="pc-progress-seg"></div>
+            <div class="pc-progress-seg"></div>
+          </div>
+          <div class="pc-meta">
+            <span>Deadline: <strong>28 พ.ค. 2026</strong> · เหลือ 15 วัน</span>
+            <span style="color: var(--success);">on track</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- =================== PAGE 2: PROJECT DETAIL =================== -->
+    <div class="page" id="page-project">
+      <div class="caption"><strong>หน้า 2 — Project Detail:</strong> รายละเอียด project + ตารางสินค้า (กดเพื่อขยายดู production step แต่ละ step ที่ผูกกับโรงงานคนละราย)</div>
+
+      <div class="breadcrumb"><a>Dashboard</a> / SS26 Tee Drop</div>
+
+      <div class="detail-header">
+        <div class="dh-top">
+          <div>
+            <div class="dh-title">SS26 Tee Drop</div>
+            <div class="page-sub">Loom &amp; Co. · สร้างเมื่อ 1 เม.ย. 2026</div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn-ghost btn">แก้ไข</button>
+            <button class="btn">+ เพิ่มสินค้า</button>
+          </div>
+        </div>
+        <div class="dh-info">
+          <div class="dh-info-item">
+            <div class="dh-info-label">Deadline</div>
+            <div class="dh-info-val">20 พ.ค. 2026 <span style="color: var(--warn); font-size: 12px;">(7 วัน)</span></div>
+          </div>
+          <div class="dh-info-item">
+            <div class="dh-info-label">งบประมาณ</div>
+            <div class="dh-info-val mono">฿ 240,000</div>
+          </div>
+          <div class="dh-info-item">
+            <div class="dh-info-label">Status รวม</div>
+            <div class="dh-info-val"><span class="status-badge status-qc">QC</span></div>
+          </div>
+          <div class="dh-info-item">
+            <div class="dh-info-label">ไฟล์แนบ</div>
+            <div class="dh-info-val">3 ไฟล์ (สเปก, แบบ, มู้ดบอร์ด)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">
+        <span>สินค้าใน Project (4 รายการ)</span>
+        <span style="font-size: 12px; color: var(--text-mute); font-weight: 400;">กดที่สินค้าเพื่อดู production step</span>
+      </div>
+
+      <!-- Product 1: expanded -->
+      <div class="product-block">
+        <div class="product-head">
+          <div class="product-img">IMG</div>
+          <div>
+            <div class="product-name">เสื้อยืดโลโก้กลาง</div>
+            <div class="product-spec">Cotton 100% / สีดำ / Size S-XL</div>
+          </div>
+          <div>
+            <div class="product-qty-label">จำนวน</div>
+            <div class="product-qty mono">500 ตัว</div>
+          </div>
+          <div>
+            <div class="product-qty-label">ต้นทุน/ชิ้น</div>
+            <div class="product-qty mono">฿ 180</div>
+          </div>
+          <div class="product-progress-mini">
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg late"></div>
+            <div class="pc-progress-seg"></div>
+          </div>
+          <div class="expand-icon">▾</div>
+        </div>
+
+        <div class="steps-table">
+          <div class="steps-row header">
+            <div></div>
+            <div>Production Step</div>
+            <div>โรงงาน</div>
+            <div>Status</div>
+            <div>ผู้รับผิดชอบ</div>
+            <div>วัน/กำหนด</div>
+            <div></div>
+          </div>
+          <div class="steps-row">
+            <div class="step-num done">✓</div>
+            <div>1. สั่งผ้า</div>
+            <div>Fabric House BKK</div>
+            <div><span class="status-badge status-delivered">ส่งมอบแล้ว</span></div>
+            <div class="assignee"><div class="avatar">PR</div>ปรียา</div>
+            <div class="days-cell days-ontime">7 / 7 วัน</div>
+            <div></div>
+          </div>
+          <div class="steps-row">
+            <div class="step-num done">✓</div>
+            <div>2. ตัดเย็บ</div>
+            <div>Threadline Co.</div>
+            <div><span class="status-badge status-delivered">ส่งมอบแล้ว</span></div>
+            <div class="assignee"><div class="avatar" style="background: var(--accent);">KT</div>กฤต</div>
+            <div class="days-cell days-ontime">12 / 14 วัน</div>
+            <div></div>
+          </div>
+          <div class="steps-row">
+            <div class="step-num late">!</div>
+            <div>3. สกรีน</div>
+            <div>Inkwell Studio</div>
+            <div><span class="status-badge status-qc">QC</span></div>
+            <div class="assignee"><div class="avatar" style="background: #c084fc;">NN</div>นิน</div>
+            <div class="days-cell days-late">7 / 2 วัน ⚠</div>
+            <div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product 2: collapsed -->
+      <div class="product-block">
+        <div class="product-head">
+          <div class="product-img">IMG</div>
+          <div>
+            <div class="product-name">หมวกแก๊ป</div>
+            <div class="product-spec">Cotton twill / Embroidery / 5-panel</div>
+          </div>
+          <div>
+            <div class="product-qty-label">จำนวน</div>
+            <div class="product-qty mono">200 ใบ</div>
+          </div>
+          <div>
+            <div class="product-qty-label">ต้นทุน/ชิ้น</div>
+            <div class="product-qty mono">฿ 220</div>
+          </div>
+          <div class="product-progress-mini">
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg late"></div>
+            <div class="pc-progress-seg"></div>
+            <div class="pc-progress-seg"></div>
+            <div class="pc-progress-seg"></div>
+            <div class="pc-progress-seg"></div>
+            <div class="pc-progress-seg"></div>
+          </div>
+          <div class="expand-icon">▸</div>
+        </div>
+      </div>
+
+      <!-- Product 3: collapsed -->
+      <div class="product-block">
+        <div class="product-head">
+          <div class="product-img">IMG</div>
+          <div>
+            <div class="product-name">ถุงผ้า Canvas</div>
+            <div class="product-spec">Cotton canvas 12oz / สกรีน 1 จุด</div>
+          </div>
+          <div>
+            <div class="product-qty-label">จำนวน</div>
+            <div class="product-qty mono">300 ใบ</div>
+          </div>
+          <div>
+            <div class="product-qty-label">ต้นทุน/ชิ้น</div>
+            <div class="product-qty mono">฿ 95</div>
+          </div>
+          <div class="product-progress-mini">
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg current"></div>
+            <div class="pc-progress-seg"></div>
+            <div class="pc-progress-seg"></div>
+          </div>
+          <div class="expand-icon">▸</div>
+        </div>
+      </div>
+
+      <!-- Product 4: collapsed -->
+      <div class="product-block">
+        <div class="product-head">
+          <div class="product-img">IMG</div>
+          <div>
+            <div class="product-name">Sticker pack</div>
+            <div class="product-spec">Die-cut vinyl / 4 ลาย</div>
+          </div>
+          <div>
+            <div class="product-qty-label">จำนวน</div>
+            <div class="product-qty mono">1,000 set</div>
+          </div>
+          <div>
+            <div class="product-qty-label">ต้นทุน/ชิ้น</div>
+            <div class="product-qty mono">฿ 15</div>
+          </div>
+          <div class="product-progress-mini">
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg done"></div>
+            <div class="pc-progress-seg done"></div>
+          </div>
+          <div class="expand-icon">▸</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- =================== PAGE 3: CREATE PROJECT =================== -->
+    <div class="page" id="page-create">
+      <div class="caption"><strong>หน้า 3 — Create Project:</strong> form เดียวสร้าง project + เพิ่มสินค้า + เพิ่ม production step (เลือกโรงงานจาก database ได้)</div>
+
+      <div class="breadcrumb"><a>Dashboard</a> / สร้าง Project ใหม่</div>
+
+      <div class="page-header">
+        <div>
+          <div class="page-title">สร้าง Project ใหม่</div>
+          <div class="page-sub">กรอกข้อมูล project + เพิ่มสินค้าได้เลยในหน้าเดียว</div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-ghost btn">ยกเลิก</button>
+          <button class="btn-secondary btn">Save Draft</button>
+          <button class="btn">สร้าง Project</button>
+        </div>
+      </div>
+
+      <!-- Project info -->
+      <div class="card-box">
+        <div class="section-title">ข้อมูล Project</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">ชื่อ Project *</label>
+            <input class="form-input" placeholder="เช่น SS26 Tee Drop">
+          </div>
+          <div class="form-group">
+            <label class="form-label">ลูกค้า / Brand *</label>
+            <input class="form-input" placeholder="ค้นหาหรือพิมพ์ใหม่">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Deadline</label>
+            <input class="form-input" type="date" value="2026-05-20">
+          </div>
+          <div class="form-group">
+            <label class="form-label">งบประมาณรวม (บาท)</label>
+            <input class="form-input mono" placeholder="240,000">
+          </div>
+          <div class="form-group" style="grid-column: span 2;">
+            <label class="form-label">รายละเอียดเพิ่มเติม</label>
+            <textarea class="form-textarea" placeholder="โน้ตเกี่ยวกับ project..."></textarea>
+          </div>
+          <div class="form-group" style="grid-column: span 2;">
+            <label class="form-label">ไฟล์แนบ (สเปก, แบบ, มู้ดบอร์ด)</label>
+            <div class="file-drop">📎 ลากไฟล์มาวาง หรือ คลิกเพื่อเลือก</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Products -->
+      <div class="card-box">
+        <div class="section-title">
+          <span>สินค้าใน Project</span>
+          <button class="btn-secondary btn">+ เพิ่มสินค้า</button>
+        </div>
+
+        <!-- Product 1 -->
+        <div class="product-form-block">
+          <div class="product-form-head">
+            <strong>สินค้าที่ 1</strong>
+            <span class="remove-x">✕ ลบสินค้า</span>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">ชื่อสินค้า</label>
+              <input class="form-input" value="เสื้อยืดโลโก้กลาง">
+            </div>
+            <div class="form-group">
+              <label class="form-label">จำนวน</label>
+              <input class="form-input mono" value="500">
+            </div>
+            <div class="form-group">
+              <label class="form-label">สเปก / รายละเอียด</label>
+              <input class="form-input" value="Cotton 100% / สีดำ / Size S-XL">
+            </div>
+            <div class="form-group">
+              <label class="form-label">ราคาต้นทุน/ชิ้น (โดยประมาณ)</label>
+              <input class="form-input mono" value="180">
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+              <label class="form-label">รูป / แบบ</label>
+              <div class="file-drop">📎 แนบรูปสินค้า / แบบ</div>
+            </div>
+          </div>
+
+          <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
+            <div class="section-title" style="font-size: 13px;">
+              <span>Production Steps</span>
+            </div>
+            <div class="step-form-head">
+              <div>ชื่อ Step</div>
+              <div>โรงงาน</div>
+              <div>ผู้รับผิดชอบ</div>
+              <div>กำหนด (วัน)</div>
+              <div></div>
+            </div>
+            <div class="step-form-row">
+              <input class="form-input" value="สั่งผ้า">
+              <select class="form-select"><option>Fabric House BKK</option></select>
+              <select class="form-select"><option>ปรียา</option></select>
+              <input class="form-input mono" value="7">
+              <span class="remove-x">✕</span>
+            </div>
+            <div class="step-form-row">
+              <input class="form-input" value="ตัดเย็บ">
+              <select class="form-select"><option>Threadline Co.</option></select>
+              <select class="form-select"><option>กฤต</option></select>
+              <input class="form-input mono" value="14">
+              <span class="remove-x">✕</span>
+            </div>
+            <div class="step-form-row">
+              <input class="form-input" value="สกรีน">
+              <select class="form-select"><option>Inkwell Studio</option></select>
+              <select class="form-select"><option>นิน</option></select>
+              <input class="form-input mono" value="2">
+              <span class="remove-x">✕</span>
+            </div>
+            <span class="add-link">+ เพิ่ม Step</span>
+          </div>
+        </div>
+
+        <!-- Product 2 collapsed-ish -->
+        <div class="product-form-block">
+          <div class="product-form-head">
+            <strong>สินค้าที่ 2 — หมวกแก๊ป</strong>
+            <span style="font-size: 12px; color: var(--text-dim);">2 steps · ยังไม่เลือกโรงงาน 1 step</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- =================== PAGE 4: FACTORY LIST =================== -->
+    <div class="page" id="page-factory">
+      <div class="caption"><strong>หน้า 4 — Factory Database:</strong> คลังโรงงาน + history แต่ละโรงงาน · ใช้อ้างอิงตอนเลือกโรงงานใน project ใหม่</div>
+
+      <div class="page-header">
+        <div>
+          <div class="page-title">Factory Database</div>
+          <div class="page-sub">โรงงานทั้งหมด 18 ราย · อัพเดทอัตโนมัติจาก project</div>
+        </div>
+        <button class="btn">+ เพิ่มโรงงาน</button>
+      </div>
+
+      <div class="filter-row">
+        <input class="search" placeholder="🔍 ค้นหาโรงงาน, ประเภทงาน...">
+        <div class="chip active">ทั้งหมด</div>
+        <div class="chip">ผ้า / Fabric</div>
+        <div class="chip">ตัดเย็บ</div>
+        <div class="chip">สกรีน / Print</div>
+        <div class="chip">เย็บปัก</div>
+        <div class="chip">หมวก</div>
+        <div class="chip">บรรจุภัณฑ์</div>
+      </div>
+
+      <div class="factory-grid">
+
+        <div class="factory-card">
+          <div class="factory-name">Fabric House BKK</div>
+          <div class="factory-type">ผ้า / Fabric supplier</div>
+          <div class="factory-rating">
+            <span class="star">★★★★★</span>
+            <span class="mono" style="color: var(--text-dim);">4.8</span>
+          </div>
+          <div class="factory-stats">
+            <div>
+              <div class="factory-stat-num mono">14</div>
+              <div class="factory-stat-lab">ครั้งที่ใช้</div>
+            </div>
+            <div>
+              <div class="factory-stat-num mono">7d</div>
+              <div class="factory-stat-lab">เฉลี่ย/ครั้ง</div>
+            </div>
+            <div>
+              <div class="factory-stat-num mono">฿฿</div>
+              <div class="factory-stat-lab">ระดับราคา</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="factory-card">
+          <div class="factory-name">Threadline Co.</div>
+          <div class="factory-type">ตัดเย็บเสื้อผ้า</div>
+          <div class="factory-rating">
+            <span class="star">★★★★</span><span style="color: var(--text-mute);">★</span>
+            <span class="mono" style="color: var(--text-dim);">4.2</span>
+          </div>
+          <div class="factory-stats">
+            <div>
+              <div class="factory-stat-num mono">9</div>
+              <div class="factory-stat-lab">ครั้งที่ใช้</div>
+            </div>
+            <div>
+              <div class="factory-stat-num mono">13d</div>
+              <div class="factory-stat-lab">เฉลี่ย/ครั้ง</div>
+            </div>
+            <div>
+              <div class="factory-stat-num mono">฿฿</div>
+              <div class="factory-stat-lab">ระดับราคา</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="factory-card">
+          <div class="factory-name">Inkwell Studio</div>
+          <div class="factory-type">สกรีน / DTF</div>
+          <div class="factory-rating">
+            <span class="star">★★★</span><span style="color: var(--text-mute);">★★</span>
+            <span class="mono" style="color: var(--text-dim);">3.4</span>
+          </div>
+          <div class="factory-stats">
+            <div>
+              <div class="factory-stat-num mono">6</div>
+              <div class="factory-stat-lab">ครั้งที่ใช้</div>
+            </div>
+            <div>
+              <div class="factory-stat-num mono">4d</div>
+              <div class="factory-stat-lab">เฉลี่ย/ครั้ง</div>
+            </div>
+            <div>
+              <div class="factory-stat-num mono">฿</div>
+              <div class="factory-stat-lab">ระดับราคา</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="factory-card">
+          <div class="factory-name">CapWorks</div>
+          <div class="factory-type">หมวก / Headwear</div>
+          <div class="factory-rating">
+            <span class="star">★★★★</span><span style="color: var(--text-mute);">★</span>
+            <span class="mono" style="color: var(--text-dim);">4.0</span>
+          </div>
+          <div class="factory-stats">
+            <div>
+              <div class="factory-stat-num mono">5</div>
+              <div class="factory-stat-lab">ครั้งที่ใช้</div>
+            </div>
+            <div>
+              <div class="factory-stat-num mono">18d</div>
+              <div class="factory-stat-lab">เฉลี่ย/ครั้ง</div>
+            </div>
+            <div>
+              <div class="factory-stat-num mono">฿฿฿</div>
+              <div class="factory-stat-lab">ระดับราคา</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="factory-card">
+          <div class="factory-name">Canvas Workshop</div>
+          <div class="factory-type">ถุงผ้า / Canvas goods</div>
+          <div class="factory-rating">
+            <span class="star">★★★★</span><span style="color: var(--text-mute);">★</span>
+            <span class="mono" style="color: var(--text-dim);">4.5</span>
+          </div>
+          <div class="factory-stats">
+            <div>
+              <div class="factory-stat-num mono">8</div>
+              <div class="factory-stat-lab">ครั้งที่ใช้</div>
+            </div>
+            <div>
+              <div class="factory-stat-num mono">10d</div>
+              <div class="factory-stat-lab">เฉลี่ย/ครั้ง</div>
+            </div>
+            <div>
+              <div class="factory-stat-num mono">฿฿</div>
+              <div class="factory-stat-lab">ระดับราคา</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="factory-card">
+          <div class="factory-name">Sticker Lab</div>
+          <div class="factory-type">สติ๊กเกอร์ / Die-cut</div>
+          <div class="factory-rating">
+            <span class="star">★★★★★</span>
+            <span class="mono" style="color: var(--text-dim);">4.9</span>
+          </div>
+          <div class="factory-stats">
+            <div>
+              <div class="factory-stat-num mono">11</div>
+              <div class="factory-stat-lab">ครั้งที่ใช้</div>
+            </div>
+            <div>
+              <div class="factory-stat-num mono">5d</div>
+              <div class="factory-stat-lab">เฉลี่ย/ครั้ง</div>
+            </div>
+            <div>
+              <div class="factory-stat-num mono">฿</div>
+              <div class="factory-stat-lab">ระดับราคา</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- =================== PAGE 5: FACTORY DETAIL =================== -->
+    <div class="page" id="page-factory-detail">
+      <div class="caption"><strong>หน้า 5 — Factory Detail:</strong> contact + history ที่ auto-generate จาก project ทั้งหมด</div>
+
+      <div class="breadcrumb"><a>Factories</a> / Threadline Co.</div>
+
+      <div class="page-header">
+        <div>
+          <div class="page-title">Threadline Co.</div>
+          <div class="page-sub">ตัดเย็บเสื้อผ้า · ★★★★ 4.2</div>
+        </div>
+        <button class="btn-ghost btn">แก้ไขข้อมูล</button>
+      </div>
+
+      <div class="factory-detail-grid">
+
+        <!-- Left: info -->
+        <div>
+          <div class="card-box">
+            <div class="section-title">ข้อมูลติดต่อ</div>
+            <div class="info-row">
+              <span class="info-row-key">ผู้ติดต่อ</span>
+              <span class="info-row-val">คุณสมชาย วงศ์ทอง</span>
+            </div>
+            <div class="info-row">
+              <span class="info-row-key">เบอร์</span>
+              <span class="info-row-val mono">081-234-5678</span>
+            </div>
+            <div class="info-row">
+              <span class="info-row-key">Line</span>
+              <span class="info-row-val mono">@threadline</span>
+            </div>
+            <div class="info-row">
+              <span class="info-row-key">ที่อยู่</span>
+              <span class="info-row-val">บางบอน, กรุงเทพฯ</span>
+            </div>
+          </div>
+
+          <div class="card-box">
+            <div class="section-title">เงื่อนไข</div>
+            <div class="info-row">
+              <span class="info-row-key">การชำระเงิน</span>
+              <span class="info-row-val">50% มัดจำ / 50% ก่อนส่งมอบ</span>
+            </div>
+            <div class="info-row">
+              <span class="info-row-key">MOQ</span>
+              <span class="info-row-val mono">100 ชิ้น</span>
+            </div>
+            <div class="info-row">
+              <span class="info-row-key">Lead time เฉลี่ย</span>
+              <span class="info-row-val mono">13 วัน</span>
+            </div>
+            <div class="info-row">
+              <span class="info-row-key">ระดับราคา</span>
+              <span class="info-row-val">฿฿ (กลาง)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: history -->
+        <div>
+          <div class="card-box">
+            <div class="section-title">
+              <span>ประวัติการผลิต (9 ครั้ง)</span>
+              <span style="font-size: 12px; color: var(--text-mute); font-weight: 400;">auto จาก project</span>
+            </div>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Project</th>
+                  <th>สินค้า</th>
+                  <th>จำนวน</th>
+                  <th>ระยะเวลา</th>
+                  <th>วันที่</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>SS26 Tee Drop</td>
+                  <td>เสื้อยืดโลโก้กลาง</td>
+                  <td class="mono">500</td>
+                  <td class="mono">12 วัน</td>
+                  <td>เม.ย. 2026</td>
+                </tr>
+                <tr>
+                  <td>Capsule FW25</td>
+                  <td>กางเกงขาสั้น</td>
+                  <td class="mono">300</td>
+                  <td class="mono">16 วัน</td>
+                  <td>มี.ค. 2026</td>
+                </tr>
+                <tr>
+                  <td>Winter Drop</td>
+                  <td>เสื้อ Hoodie</td>
+                  <td class="mono">250</td>
+                  <td class="mono">18 วัน</td>
+                  <td>ธ.ค. 2025</td>
+                </tr>
+                <tr>
+                  <td>Basics Restock</td>
+                  <td>เสื้อยืดเปล่า</td>
+                  <td class="mono">800</td>
+                  <td class="mono">14 วัน</td>
+                  <td>ต.ค. 2025</td>
+                </tr>
+                <tr>
+                  <td>Pop-up Chiang Mai</td>
+                  <td>เสื้อยืดพิมพ์ลาย</td>
+                  <td class="mono">400</td>
+                  <td class="mono">11 วัน</td>
+                  <td>ส.ค. 2025</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  function showPage(id, btn) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + id).classList.add('active');
+    document.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+
+</body>
+</html>

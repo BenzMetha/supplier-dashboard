@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(extract-text \"supplier-dashboard-spec.docx\")",
+      "Bash(pandoc \"supplier-dashboard-spec.docx\" -t plain)",
+      "Bash(python -c ' *)",
+      "Bash(python3 -c ' *)",
+      "PowerShell($scriptPath = \"C:\\\\Users\\\\metha\\\\AppData\\\\Roaming\\\\Claude\\\\local-agent-mode-sessions\\\\skills-plugin\\\\11b9432e-d328-4009-9e64-78b9bb3876ce\\\\ac21cf69-6491-47da-b87e-fd3f44a55b8e\\\\skills\\\\docx\\\\scripts\\\\office\\\\unpack.py\")",
+      "PowerShell($docPath = \"C:\\\\Users\\\\metha\\\\OneDrive\\\\Desktop\\\\Claude\\\\CuteBoy\\\\supplier-dashboard\\\\supplier-dashboard-spec.docx\")",
+      "PowerShell($outDir = \"C:\\\\Users\\\\metha\\\\OneDrive\\\\Desktop\\\\Claude\\\\CuteBoy\\\\supplier-dashboard\\\\spec-unpacked\")",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(powershell -command \"\\(Get-Content 'C:\\\\Users\\\\metha\\\\OneDrive\\\\Desktop\\\\Claude\\\\CuteBoy\\\\supplier-dashboard\\\\src\\\\index.css'\\).Count\")",
+      "Bash(npx vite *)",
+      "Bash(Get-Process node *)",
+      "Bash(Select-Object Id, CPU, ProcessName)"
+    ]
+  }
+}
