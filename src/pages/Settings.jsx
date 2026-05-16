@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useStore } from '../store.jsx';
-import { getConfig, saveConfig, getToken, requestToken, revokeToken } from '../gapi.js';
-import { ensureSheetTabs } from '../gapi.js';
+import { getConfig, saveConfig, hasEnvConfig, getToken, requestToken, revokeToken, ensureSheetTabs } from '../gapi.js';
 
 export default function Settings() {
   const { syncStatus, dispatch, state, reloadFromSheets } = useStore();
@@ -29,6 +28,10 @@ export default function Settings() {
     try {
       await requestToken(id);
       setAuthStatus('connected');
+      // Auto-load data from Sheets right after connecting
+      try {
+        await reloadFromSheets();
+      } catch (_) { /* sync error is shown via syncStatus */ }
     } catch (err) {
       console.error(err);
       setAuthStatus('error');
@@ -121,68 +124,108 @@ export default function Settings() {
       {/* Google API config */}
       <div className="card-box">
         <div className="section-title">Google API Configuration</div>
-        <div className="form-grid" style={{ marginTop: 12 }}>
-          <div className="form-group" style={{ gridColumn: 'span 2' }}>
-            <label className="form-label">Google OAuth Client ID</label>
-            <input
-              className="form-input mono"
-              placeholder="xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com"
-              value={clientId}
-              onChange={e => setClientId(e.target.value)}
-            />
-            <div style={{ fontSize: 11, color: 'var(--text-mute)', marginTop: 4 }}>
-              สร้างได้ที่ Google Cloud Console → APIs &amp; Services → Credentials → OAuth 2.0 Client ID (type: Web application)
+
+        {hasEnvConfig() ? (
+          /* ── Team-member view: config pre-set via env vars ── */
+          <div>
+            <div style={{
+              marginTop: 12, padding: '12px 16px', borderRadius: 8,
+              background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.3)',
+              display: 'flex', alignItems: 'center', gap: 10,
+            }}>
+              <span style={{ fontSize: 20 }}>✅</span>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--text)' }}>
+                  ระบบตั้งค่าไว้แล้ว — ไม่ต้องกรอกอะไรเพิ่ม
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 2 }}>
+                  Config ถูก deploy มาพร้อมกับ app แล้ว กดปุ่มด้านล่างเพื่อเข้าใช้งาน
+                </div>
+              </div>
+            </div>
+
+            <div style={{ marginTop: 16 }}>
+              {authStatus !== 'connected' ? (
+                <button
+                  className="btn"
+                  style={{ fontSize: 15, padding: '10px 28px' }}
+                  onClick={handleConnect}
+                  disabled={authStatus === 'loading'}
+                >
+                  {authStatus === 'loading' ? '⏳ กำลังเชื่อมต่อ...' : '🔗 Connect with Google เพื่อเริ่มใช้งาน'}
+                </button>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                  <span style={{ color: 'var(--success)', fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--success)', display: 'inline-block' }} />
+                    เชื่อมต่อ Google แล้ว — ข้อมูลจะ sync อัตโนมัติ
+                  </span>
+                  <button className="btn btn-ghost" style={{ fontSize: 12 }} onClick={handleDisconnect}>
+                    ออกจากระบบ
+                  </button>
+                </div>
+              )}
             </div>
           </div>
-
-          <div className="form-group" style={{ gridColumn: 'span 2' }}>
-            <label className="form-label">Google Sheets — Spreadsheet ID</label>
-            <input
-              className="form-input mono"
-              placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
-              value={spreadsheetId}
-              onChange={e => setSpreadsheetId(e.target.value)}
-            />
-            <div style={{ fontSize: 11, color: 'var(--text-mute)', marginTop: 4 }}>
-              เอา ID จาก URL ของ Google Sheets: docs.google.com/spreadsheets/d/<strong>ID</strong>/edit
+        ) : (
+          /* ── Admin view: full config form ── */
+          <div>
+            <div className="form-grid" style={{ marginTop: 12 }}>
+              <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                <label className="form-label">Google OAuth Client ID</label>
+                <input
+                  className="form-input mono"
+                  placeholder="xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com"
+                  value={clientId}
+                  onChange={e => setClientId(e.target.value)}
+                />
+                <div style={{ fontSize: 11, color: 'var(--text-mute)', marginTop: 4 }}>
+                  สร้างได้ที่ Google Cloud Console → APIs &amp; Services → Credentials → OAuth 2.0 Client ID (type: Web application)
+                </div>
+              </div>
+              <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                <label className="form-label">Google Sheets — Spreadsheet ID</label>
+                <input
+                  className="form-input mono"
+                  placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
+                  value={spreadsheetId}
+                  onChange={e => setSpreadsheetId(e.target.value)}
+                />
+                <div style={{ fontSize: 11, color: 'var(--text-mute)', marginTop: 4 }}>
+                  เอา ID จาก URL ของ Google Sheets: docs.google.com/spreadsheets/d/<strong>ID</strong>/edit
+                </div>
+              </div>
+              <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                <label className="form-label">Google Drive — Folder ID (สำหรับเก็บรูปสินค้า)</label>
+                <input
+                  className="form-input mono"
+                  placeholder="1a2b3c4d5e6f7g8h9i0j (ไม่บังคับ)"
+                  value={folderId}
+                  onChange={e => setFolderId(e.target.value)}
+                />
+                <div style={{ fontSize: 11, color: 'var(--text-mute)', marginTop: 4 }}>
+                  เอา ID จาก URL ของ Google Drive Folder: drive.google.com/drive/folders/<strong>ID</strong>
+                </div>
+              </div>
+            </div>
+            <div style={{ marginTop: 16, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <button className="btn btn-secondary" onClick={handleSaveConfig}>บันทึก Config</button>
+              {authStatus !== 'connected' ? (
+                <button className="btn" onClick={handleConnect} disabled={authStatus === 'loading'}>
+                  {authStatus === 'loading' ? 'กำลังเชื่อมต่อ...' : '🔗 Connect with Google'}
+                </button>
+              ) : (
+                <>
+                  <span style={{ color: 'var(--success)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--success)', display: 'inline-block' }} />
+                    เชื่อมต่อ Google แล้ว
+                  </span>
+                  <button className="btn btn-ghost" onClick={handleDisconnect}>ยกเลิกการเชื่อมต่อ</button>
+                </>
+              )}
             </div>
           </div>
-
-          <div className="form-group" style={{ gridColumn: 'span 2' }}>
-            <label className="form-label">Google Drive — Folder ID (สำหรับเก็บรูปสินค้า)</label>
-            <input
-              className="form-input mono"
-              placeholder="1a2b3c4d5e6f7g8h9i0j (ไม่บังคับ — ถ้าว่างจะเก็บใน root Drive)"
-              value={folderId}
-              onChange={e => setFolderId(e.target.value)}
-            />
-            <div style={{ fontSize: 11, color: 'var(--text-mute)', marginTop: 4 }}>
-              เอา ID จาก URL ของ Google Drive Folder: drive.google.com/drive/folders/<strong>ID</strong>
-            </div>
-          </div>
-        </div>
-
-        <div style={{ marginTop: 16, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          <button className="btn btn-secondary" onClick={handleSaveConfig}>บันทึก Config</button>
-
-          {authStatus !== 'connected' ? (
-            <button
-              className="btn"
-              onClick={handleConnect}
-              disabled={authStatus === 'loading'}
-            >
-              {authStatus === 'loading' ? 'กำลังเชื่อมต่อ...' : '🔗 Connect with Google'}
-            </button>
-          ) : (
-            <>
-              <span style={{ color: 'var(--success)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--success)', display: 'inline-block' }} />
-                เชื่อมต่อ Google แล้ว
-              </span>
-              <button className="btn btn-ghost" onClick={handleDisconnect}>ยกเลิกการเชื่อมต่อ</button>
-            </>
-          )}
-        </div>
+        )}
       </div>
 
       {/* Data Management */}

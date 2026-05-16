@@ -6,12 +6,33 @@ const CONFIG_KEY = 'supplyhub_config';
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
+// Env-var defaults (set in Vercel → Environment Variables)
+const ENV_DEFAULTS = {
+  clientId:      import.meta.env.VITE_CLIENT_ID      || '',
+  spreadsheetId: import.meta.env.VITE_SPREADSHEET_ID || '',
+  folderId:      import.meta.env.VITE_FOLDER_ID       || '',
+};
+
 export function getConfig() {
-  try { return JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}'); } catch { return {}; }
+  try {
+    const stored = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}');
+    return {
+      clientId:      stored.clientId      || ENV_DEFAULTS.clientId,
+      spreadsheetId: stored.spreadsheetId || ENV_DEFAULTS.spreadsheetId,
+      folderId:      stored.folderId      || ENV_DEFAULTS.folderId,
+    };
+  } catch {
+    return { ...ENV_DEFAULTS };
+  }
 }
 
 export function saveConfig(cfg) {
   localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
+}
+
+/** true = config comes from Vercel env vars (team members don't need to type anything) */
+export function hasEnvConfig() {
+  return !!(ENV_DEFAULTS.clientId && ENV_DEFAULTS.spreadsheetId);
 }
 
 // ── Token storage ─────────────────────────────────────────────────────────────
