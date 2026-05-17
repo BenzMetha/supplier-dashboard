@@ -8,6 +8,7 @@ import FactoryDatabase from './pages/FactoryDatabase.jsx';
 import FactoryDetail from './pages/FactoryDetail.jsx';
 import FactoryForm from './pages/FactoryForm.jsx';
 import Settings from './pages/Settings.jsx';
+import TeamMembers from './pages/TeamMembers.jsx';
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
             <Route path="/factories/new"         element={<FactoryForm />} />
             <Route path="/factories/:id"         element={<FactoryDetail />} />
             <Route path="/factories/:id/edit"    element={<FactoryForm />} />
+            <Route path="/team"                  element={<TeamMembers />} />
             <Route path="/settings"              element={<Settings />} />
             <Route path="*"                      element={<Navigate to="/" />} />
           </Routes>

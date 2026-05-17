@@ -12,7 +12,7 @@ export default function Layout({ children }) {
     { path: '/',            label: '▦  Dashboard',        section: 'Main' },
     { path: '/projects/new',label: '+  Create Project',    section: null },
     { path: '/factories',   label: '⛁  Factories',         section: 'Database' },
-    { path: '/activity',    label: '◷  Activity',           section: 'Team',     disabled: true },
+    { path: '/team',         label: '👥  Team',               section: 'Team' },
     { path: '/settings',    label: '⚙  Settings',           section: null },
   ];
 
