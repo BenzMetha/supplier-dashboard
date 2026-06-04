@@ -114,6 +114,22 @@ export default function ProjectForm() {
       i !== pIdx ? p : { ...p, steps: p.steps.filter((_, j) => j !== sIdx) }
     ));
 
+  // Copy all steps from another product (fresh IDs so no conflict)
+  const copyStepsFrom = (fromPIdx, toPIdx) => {
+    setProducts(ps => {
+      const source = ps[fromPIdx];
+      if (!source) return ps;
+      const copiedSteps = source.steps.map(s => ({
+        ...s,
+        id: genId('step'),        // new ID to avoid collision
+        status: 'draft',          // reset to draft
+        started_at: null,
+        note: '',
+      }));
+      return ps.map((p, i) => i !== toPIdx ? p : { ...p, steps: copiedSteps });
+    });
+  };
+
   // ── Image upload to Drive ────────────────────────────────────────────────────
   const handleImageUpload = async (pIdx, file) => {
     const token = getToken();
@@ -459,7 +475,36 @@ export default function ProjectForm() {
 
             {/* Production Steps */}
             <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
-              <div className="section-title" style={{ fontSize: 13 }}>Production Steps</div>
+              <div className="section-title" style={{ fontSize: 13 }}>
+                <span>Production Steps</span>
+                {/* Copy steps from another product */}
+                {products.filter((p, i) => i !== pIdx && p.steps.some(s => s.step_name.trim())).length > 0 && (
+                  <select
+                    className="form-select"
+                    style={{ fontSize: 12, padding: '3px 8px', width: 'auto', color: 'var(--text-dim)' }}
+                    value=""
+                    onChange={e => {
+                      if (e.target.value === '') return;
+                      const fromIdx = Number(e.target.value);
+                      if (window.confirm(`คัดลอก steps จาก "${products[fromIdx].name || `สินค้าที่ ${fromIdx + 1}`}" มาแทนที่ steps ปัจจุบัน?`)) {
+                        copyStepsFrom(fromIdx, pIdx);
+                      }
+                      e.target.value = '';
+                    }}
+                  >
+                    <option value="">📋 คัดลอก steps จาก...</option>
+                    {products.map((p, i) => {
+                      if (i === pIdx) return null;
+                      if (!p.steps.some(s => s.step_name.trim())) return null;
+                      return (
+                        <option key={p.id} value={i}>
+                          สินค้าที่ {i + 1}{p.name ? ` — ${p.name}` : ''} ({p.steps.filter(s => s.step_name.trim()).length} steps)
+                        </option>
+                      );
+                    })}
+                  </select>
+                )}
+              </div>
               <div className="step-form-head">
                 <div>ชื่อ Step</div>
                 <div>โรงงาน</div>
