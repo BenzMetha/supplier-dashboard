@@ -207,7 +207,55 @@ export function StoreProvider({ children }) {
       });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 3. Debounced sync to Sheets on every state change
+  // Track syncStatus in a ref so the poll interval can read it without re-registering
+  const syncStatusRef = useRef('idle');
+  useEffect(() => { syncStatusRef.current = syncStatus; }, [syncStatus]);
+
+  // Track last write time — don't apply poll results if a write happened recently
+  const lastWriteRef = useRef(0);
+
+  // 3. Auto-poll: re-read Sheets every 30 s to pick up other users' changes
+  useEffect(() => {
+    const poll = async () => {
+      // Skip if anything is already in-flight
+      if (syncStatusRef.current !== 'synced') return;
+      const token = getToken();
+      const { spreadsheetId } = getConfig();
+      if (!token || !spreadsheetId) return;
+
+      try {
+        // Read Sheets WITHOUT blocking local writes (skipSync stays false during fetch)
+        const sheetsData = await readFromSheets(spreadsheetId, token);
+
+        // After async read, check AGAIN — if user changed something while we were
+        // reading, discard this poll result to avoid overwriting their edits
+        if (syncStatusRef.current !== 'synced') return;
+        // Also skip if a write happened in the last 5 s (still settling)
+        if (Date.now() - lastWriteRef.current < 5000) return;
+
+        skipSync.current = true;
+        dispatch({ type: 'LOAD_FROM_SHEETS', payload: sheetsData });
+        setSyncStatus('synced');
+      } catch (err) {
+        console.warn('[store] Auto-poll failed:', err.message);
+      } finally {
+        setTimeout(() => { skipSync.current = false; }, 500);
+      }
+    };
+
+    const interval = setInterval(poll, 30000); // every 30 seconds
+
+    // Also re-poll when user switches back to this tab
+    const onVisible = () => { if (document.visibilityState === 'visible') poll(); };
+    document.addEventListener('visibilitychange', onVisible);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 4. Debounced sync to Sheets on every state change
   useEffect(() => {
     if (skipSync.current) return;
 
@@ -220,7 +268,10 @@ export function StoreProvider({ children }) {
     syncTimer.current = setTimeout(() => {
       setSyncStatus('syncing');
       writeAllToSheets(state, spreadsheetId, token)
-        .then(() => setSyncStatus('synced'))
+        .then(() => {
+          lastWriteRef.current = Date.now(); // record time of successful write
+          setSyncStatus('synced');
+        })
         .catch(err => {
           console.error('[store] Sheets sync failed:', err);
           setSyncStatus('error');
