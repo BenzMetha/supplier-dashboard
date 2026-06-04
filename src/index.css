@@ -440,7 +440,7 @@ body {
 }
 .step-form-head {
   display: grid;
-  grid-template-columns: 1fr 1.5fr 1fr 210px 30px;
+  grid-template-columns: 18px 1fr 1.5fr 1fr 210px 30px;
   gap: 10px;
   font-size: 11px;
   color: var(--text-mute);
@@ -450,11 +450,30 @@ body {
 }
 .step-form-row {
   display: grid;
-  grid-template-columns: 1fr 1.5fr 1fr 210px 30px;
+  grid-template-columns: 18px 1fr 1.5fr 1fr 210px 30px;
   gap: 10px;
   margin-bottom: 8px;
   align-items: start;
+  border-radius: 6px;
+  transition: background 0.15s;
 }
+.step-form-row--dragover {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  outline: 1.5px dashed var(--accent);
+}
+.step-drag-handle {
+  cursor: grab;
+  color: var(--text-mute);
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 7px;
+  user-select: none;
+}
+.step-drag-handle:hover { color: var(--text-dim); }
+.step-drag-handle:active { cursor: grabbing; }
 .step-date-range {
   display: flex;
   flex-direction: column;

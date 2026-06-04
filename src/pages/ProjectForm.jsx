@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useStore } from '../store.jsx';
 import { genId, calcPlanDays } from '../logic.js';
@@ -113,6 +113,39 @@ export default function ProjectForm() {
     setProducts(ps => ps.map((p, i) =>
       i !== pIdx ? p : { ...p, steps: p.steps.filter((_, j) => j !== sIdx) }
     ));
+
+  // ── Drag-to-reorder steps ────────────────────────────────────────────────────
+  const dragItem     = useRef(null); // { pIdx, sIdx }
+  const dragOverItem = useRef(null); // { pIdx, sIdx }
+  const [dragOver, setDragOver] = useState(null); // for visual highlight
+
+  const handleDragStart = (pIdx, sIdx) => {
+    dragItem.current = { pIdx, sIdx };
+  };
+
+  const handleDragEnter = (pIdx, sIdx) => {
+    if (dragItem.current?.pIdx !== pIdx) return; // cross-product drag not allowed
+    dragOverItem.current = { pIdx, sIdx };
+    setDragOver(`${pIdx}-${sIdx}`);
+  };
+
+  const handleDragEnd = () => {
+    const from = dragItem.current;
+    const to   = dragOverItem.current;
+    setDragOver(null);
+    dragItem.current     = null;
+    dragOverItem.current = null;
+    if (!from || !to) return;
+    if (from.pIdx !== to.pIdx || from.sIdx === to.sIdx) return;
+
+    setProducts(ps => ps.map((p, i) => {
+      if (i !== from.pIdx) return p;
+      const steps = [...p.steps];
+      const [moved] = steps.splice(from.sIdx, 1);
+      steps.splice(to.sIdx, 0, moved);
+      return { ...p, steps };
+    }));
+  };
 
   // Copy all steps from another product (fresh IDs so no conflict)
   const copyStepsFrom = (fromPIdx, toPIdx) => {
@@ -506,6 +539,7 @@ export default function ProjectForm() {
                 )}
               </div>
               <div className="step-form-head">
+                <div />
                 <div>ชื่อ Step</div>
                 <div>โรงงาน</div>
                 <div>ผู้รับผิดชอบ</div>
@@ -514,7 +548,16 @@ export default function ProjectForm() {
               </div>
 
               {prod.steps.map((step, sIdx) => (
-                <div key={step.id} className="step-form-row">
+                <div
+                  key={step.id}
+                  className={`step-form-row${dragOver === `${pIdx}-${sIdx}` ? ' step-form-row--dragover' : ''}`}
+                  draggable
+                  onDragStart={() => handleDragStart(pIdx, sIdx)}
+                  onDragEnter={() => handleDragEnter(pIdx, sIdx)}
+                  onDragOver={e => e.preventDefault()}
+                  onDragEnd={handleDragEnd}
+                >
+                  <div className="step-drag-handle" title="ลากเพื่อเรียงลำดับ">⠿</div>
                   <input
                     className="form-input"
                     placeholder="เช่น สั่งผ้า"
