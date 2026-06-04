@@ -1,213 +1,31 @@
 import { useState } from 'react';
-import {
-  DndContext, DragOverlay,
-  useDraggable, useDroppable,
-  PointerSensor, useSensor, useSensors,
-} from '@dnd-kit/core';
-import { CSS } from '@dnd-kit/utilities';
 import { useStore } from '../store.jsx';
-import { STATUS_LABELS } from '../logic.js';
+import { Modal } from '../components.jsx';
+import { STATUS_LABELS, STATUS_CSS } from '../logic.js';
 import { driveThumbnail } from '../gapi.js';
-
-const DONE_COL = '__done__';
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-/** Build ordered column names from union of all step_names in the project */
-function buildColumns(allSteps) {
-  const nameData = {};
-  allSteps.forEach(s => {
-    if (!nameData[s.step_name]) nameData[s.step_name] = { sum: 0, count: 0 };
-    nameData[s.step_name].sum   += s.order;
-    nameData[s.step_name].count += 1;
-  });
-  return Object.entries(nameData)
-    .map(([name, d]) => ({ name, avg: d.sum / d.count }))
-    .sort((a, b) => a.avg - b.avg)
-    .map(x => x.name);
-}
-
-/** First step that is NOT 'delivered' = the current active step */
-function getCurrentStep(productSteps) {
-  const sorted = [...productSteps].sort((a, b) => a.order - b.order);
-  return sorted.find(s => s.status !== 'delivered') || null;
-}
-
-/** Which column does this product belong to? */
-function getProductColId(productSteps) {
-  const cur = getCurrentStep(productSteps);
-  return cur ? cur.step_name : DONE_COL;
-}
-
-// ── Droppable Column ──────────────────────────────────────────────────────────
-
-function KanbanColumn({ colId, title, count, isDone, children }) {
-  const { setNodeRef, isOver } = useDroppable({ id: colId });
-
-  return (
-    <div
-      ref={setNodeRef}
-      className={[
-        'kb-col',
-        isOver  ? 'kb-col--over' : '',
-        isDone  ? 'kb-col--done' : '',
-        (!isDone && count > 0) ? 'kb-col--active' : '',
-      ].join(' ')}
-    >
-      <div className="kb-col-head">
-        <span className={`kb-col-title${isDone ? ' kb-col-title--done' : count > 0 ? ' kb-col-title--active' : ''}`}>
-          {title}
-        </span>
-        <span className={`kb-col-badge${isDone ? ' kb-col-badge--done' : count > 0 ? ' kb-col-badge--active' : ''}`}>
-          {count}
-        </span>
-      </div>
-
-      <div className="kb-cards">
-        {count === 0
-          ? <div className="kb-empty">ไม่มีสินค้า</div>
-          : children
-        }
-      </div>
-    </div>
-  );
-}
-
-// ── Product Card (draggable) ──────────────────────────────────────────────────
-
-function ProductCard({ product, productSteps, factories, members, isOverlay }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: product.id });
-
-  const style = transform ? { transform: CSS.Translate.toString(transform) } : {};
-
-  const sorted    = [...productSteps].sort((a, b) => a.order - b.order);
-  const current   = getCurrentStep(productSteps);
-  const doneCount = sorted.filter(s => s.status === 'delivered').length;
-  const factory   = current?.factory_id   ? factories.find(f => f.id === current.factory_id)   : null;
-  const member    = current?.assignee_id  ? members.find(m => m.id === current.assignee_id)    : null;
-
-  return (
-    <div
-      ref={!isOverlay ? setNodeRef : undefined}
-      style={style}
-      {...(!isOverlay ? listeners : {})}
-      {...(!isOverlay ? attributes : {})}
-      className={`kb-card${isDragging && !isOverlay ? ' kb-card--dragging' : ''}${isOverlay ? ' kb-card--overlay' : ''}`}
-    >
-      {/* Thumbnail */}
-      <div className="kb-card-thumb">
-        {product.image_drive_id
-          ? <img
-              src={driveThumbnail(product.image_drive_id)}
-              alt={product.name}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }}
-            />
-          : <span className="kb-card-icon">📦</span>
-        }
-      </div>
-
-      {/* Info */}
-      <div className="kb-card-name">{product.name}</div>
-
-      {product.quantity && (
-        <div className="kb-card-meta">
-          <span>{product.quantity.toLocaleString()} ชิ้น</span>
-          {product.spec && <span>· {product.spec}</span>}
-        </div>
-      )}
-
-      {/* Factory / Assignee */}
-      {(factory || member) && (
-        <div className="kb-card-assign">
-          {factory && <span className="kb-assign-item">🏭 {factory.name}</span>}
-          {member  && (
-            <span className="kb-assign-item" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span className="kb-avatar" style={{ background: member.color }}>{member.initials}</span>
-              {member.name}
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* Step progress bar */}
-      <div className="kb-stepbar">
-        {sorted.map(s => {
-          let cls = 'kb-seg';
-          if (s.status === 'delivered')           cls += ' kb-seg--done';
-          else if (s.status !== 'draft')          cls += ' kb-seg--act';
-          return <div key={s.id} className={cls} title={`${s.step_name}: ${STATUS_LABELS[s.status] || s.status}`} />;
-        })}
-      </div>
-      <div className="kb-step-count">{doneCount}/{sorted.length} steps</div>
-    </div>
-  );
-}
-
-// ── Main Component ────────────────────────────────────────────────────────────
 
 export default function ProductKanban({ projectId }) {
   const { state, dispatch } = useStore();
-  const [activeId, setActiveId] = useState(null);
+  const [noteModal, setNoteModal] = useState(null);
+  const [noteText, setNoteText]   = useState('');
 
-  const products   = state.products.filter(p => p.project_id === projectId);
-  const productIds = products.map(p => p.id);
-  const allSteps   = state.steps.filter(s => productIds.includes(s.product_id));
+  const products = state.products.filter(p => p.project_id === projectId);
 
-  const columns = buildColumns(allSteps);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
-  );
-
-  const handleDragStart = ({ active }) => setActiveId(active.id);
-
-  const handleDragEnd = ({ active, over }) => {
-    setActiveId(null);
-    if (!over) return;
-
-    const productId  = active.id;
-    const targetCol  = over.id; // step_name or DONE_COL
-
-    const pSteps = allSteps
-      .filter(s => s.product_id === productId)
-      .sort((a, b) => a.order - b.order);
-
-    if (!pSteps.length) return;
-
-    if (targetCol === DONE_COL) {
-      // Mark every step as delivered
-      pSteps.forEach(s => {
-        if (s.status !== 'delivered') {
-          dispatch({ type: 'UPDATE_STEP_STATUS', id: s.id, status: 'delivered', note: s.note });
-        }
-      });
-      return;
-    }
-
-    const targetIdx = pSteps.findIndex(s => s.step_name === targetCol);
-    if (targetIdx === -1) return; // Product has no step with this name → ignore
-
-    pSteps.forEach((step, i) => {
-      const newStatus = i < targetIdx ? 'delivered'
-                      : i === targetIdx ? 'in_progress'
-                      : 'draft';
-      if (step.status !== newStatus) {
-        dispatch({ type: 'UPDATE_STEP_STATUS', id: step.id, status: newStatus, note: step.note });
-      }
-    });
+  const openNote = (step) => {
+    setNoteModal(step);
+    setNoteText(step.note || '');
   };
 
-  // Build column → products map
-  const colMap = Object.fromEntries([...columns, DONE_COL].map(c => [c, []]));
-  products.forEach(p => {
-    const pSteps = allSteps.filter(s => s.product_id === p.id);
-    if (!pSteps.length) return; // No steps → skip
-    const col = getProductColId(pSteps);
-    if (colMap[col] !== undefined) colMap[col].push(p);
-  });
+  const saveNote = () => {
+    if (!noteModal) return;
+    dispatch({ type: 'UPDATE_STEP', payload: { ...noteModal, note: noteText } });
+    setNoteModal(null);
+  };
 
-  const activeProd  = activeId ? products.find(p => p.id === activeId) : null;
-  const activeSteps = activeProd ? allSteps.filter(s => s.product_id === activeProd.id) : [];
+  const toggleDone = (step) => {
+    const newStatus = step.status === 'delivered' ? 'in_progress' : 'delivered';
+    dispatch({ type: 'UPDATE_STEP_STATUS', id: step.id, status: newStatus, note: step.note });
+  };
 
   if (products.length === 0) {
     return (
@@ -218,62 +36,174 @@ export default function ProductKanban({ projectId }) {
   }
 
   return (
-    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* Hint */}
       <div className="kb-hint">
-        ✦ ลากการ์ดสินค้าไปยัง column เพื่ออัพเดต step — steps ก่อนหน้าจะถูกทำเครื่องหมาย <strong>ส่งมอบแล้ว</strong> อัตโนมัติ
+        ✦ กด <strong>วงกลม</strong> มุมซ้ายของแต่ละ step เพื่อทำเครื่องหมาย <strong>เสร็จสิ้น</strong> — ทำได้อิสระ ไม่ต้องเรียงลำดับ
       </div>
 
-      <div className="kb-board">
-        {columns.map(col => (
-          <KanbanColumn
-            key={col}
-            colId={col}
-            title={col}
-            count={colMap[col]?.length || 0}
-          >
-            {(colMap[col] || []).map(prod => (
-              <ProductCard
-                key={prod.id}
-                product={prod}
-                productSteps={allSteps.filter(s => s.product_id === prod.id)}
-                factories={state.factories}
-                members={state.members}
-              />
-            ))}
-          </KanbanColumn>
-        ))}
+      {products.map(product => {
+        const steps = state.steps
+          .filter(s => s.product_id === product.id)
+          .sort((a, b) => a.order - b.order);
 
-        {/* Always show "Done" column last */}
-        <KanbanColumn
-          colId={DONE_COL}
-          title="✅ เสร็จสิ้น"
-          count={colMap[DONE_COL]?.length || 0}
-          isDone
+        const doneCount = steps.filter(s => s.status === 'delivered').length;
+        const pct = steps.length ? Math.round((doneCount / steps.length) * 100) : 0;
+
+        return (
+          <div key={product.id} className="task-group">
+
+            {/* ── Product header ── */}
+            <div className="task-group-head">
+              <div className="task-group-thumb">
+                {product.image_drive_id
+                  ? <img
+                      src={driveThumbnail(product.image_drive_id)}
+                      alt={product.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 6 }}
+                    />
+                  : <span style={{ fontSize: 24 }}>📦</span>
+                }
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="task-group-name">{product.name}</div>
+                {product.spec && (
+                  <div className="task-group-spec">{product.spec}</div>
+                )}
+              </div>
+              <div className="task-group-right">
+                {product.quantity && (
+                  <div className="task-group-qty mono">{product.quantity.toLocaleString()} ชิ้น</div>
+                )}
+                <div className="task-progress-wrap">
+                  <div className="task-progress-bar">
+                    <div
+                      className="task-progress-fill"
+                      style={{ width: `${pct}%`, background: pct === 100 ? 'var(--success)' : 'var(--accent)' }}
+                    />
+                  </div>
+                  <div className="task-progress-label">{doneCount}/{steps.length}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Step list ── */}
+            <div className="task-list">
+              {steps.map((step, idx) => {
+                const isDone   = step.status === 'delivered';
+                const isActive = step.status === 'in_progress';
+                const factory  = step.factory_id  ? state.factories.find(f => f.id === step.factory_id)  : null;
+                const member   = step.assignee_id ? state.members.find(m => m.id === step.assignee_id)   : null;
+
+                return (
+                  <div
+                    key={step.id}
+                    className={`task-card${isDone ? ' task-card--done' : isActive ? ' task-card--active' : ''}`}
+                  >
+                    {/* Circle checkbox */}
+                    <button
+                      className={`task-check${isDone ? ' task-check--done' : isActive ? ' task-check--active' : ''}`}
+                      onClick={() => toggleDone(step)}
+                      title={isDone ? 'คลิกเพื่อยกเลิก' : 'คลิกเพื่อทำเครื่องหมายเสร็จสิ้น'}
+                    >
+                      {isDone && (
+                        <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                          <path d="M2 7L5.5 10.5L12 3.5" stroke="white" strokeWidth="2.2"
+                            strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </button>
+
+                    {/* Step number */}
+                    <div className={`task-num${isDone ? ' task-num--done' : isActive ? ' task-num--active' : ''}`}>
+                      {idx + 1}
+                    </div>
+
+                    {/* Main content */}
+                    <div className="task-content">
+                      <div className={`task-name${isDone ? ' task-name--done' : ''}`}>
+                        {step.step_name}
+                      </div>
+                      <div className="task-meta">
+                        {factory && (
+                          <span className="task-meta-item">🏭 {factory.name}</span>
+                        )}
+                        {member && (
+                          <span className="task-meta-item" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <span style={{
+                              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                              width: 18, height: 18, borderRadius: '50%',
+                              background: member.color, fontSize: 9, fontWeight: 700, color: 'white',
+                              flexShrink: 0,
+                            }}>
+                              {member.initials}
+                            </span>
+                            {member.name}
+                          </span>
+                        )}
+                        {step.expected_days && (
+                          <span className="task-meta-item mono" style={{ color: 'var(--text-mute)' }}>
+                            {step.expected_days} วัน
+                          </span>
+                        )}
+                        {step.note && (
+                          <span className="task-meta-item" style={{ color: 'var(--text-mute)', fontStyle: 'italic' }}>
+                            "{step.note}"
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right — status + note btn */}
+                    <div className="task-right">
+                      <span className={`status-badge ${STATUS_CSS[step.status] || 'status-draft'}`}>
+                        {STATUS_LABELS[step.status] || step.status}
+                      </span>
+                      <button
+                        className="btn btn-ghost"
+                        style={{ padding: '2px 7px', fontSize: 12, opacity: 0.6 }}
+                        title="บันทึกหมายเหตุ"
+                        onClick={() => openNote(step)}
+                      >
+                        📝
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Note modal */}
+      {noteModal && (
+        <Modal
+          title={`📝 หมายเหตุ: ${noteModal.step_name}`}
+          onClose={() => setNoteModal(null)}
+          footer={
+            <>
+              <button className="btn btn-ghost" onClick={() => setNoteModal(null)}>ยกเลิก</button>
+              <button className="btn" onClick={saveNote}>บันทึก</button>
+            </>
+          }
         >
-          {(colMap[DONE_COL] || []).map(prod => (
-            <ProductCard
-              key={prod.id}
-              product={prod}
-              productSteps={allSteps.filter(s => s.product_id === prod.id)}
-              factories={state.factories}
-              members={state.members}
+          <div className="form-group">
+            <label className="form-label">บันทึก / หมายเหตุ</label>
+            <textarea
+              className="form-textarea"
+              value={noteText}
+              onChange={e => setNoteText(e.target.value)}
+              placeholder="บันทึกสิ่งที่คุยกับโรงงาน, วันส่ง, รายละเอียดเพิ่มเติม..."
+              style={{ minHeight: 100 }}
+              autoFocus
             />
-          ))}
-        </KanbanColumn>
-      </div>
-
-      {/* Ghost card while dragging */}
-      <DragOverlay dropAnimation={{ duration: 150, easing: 'ease' }}>
-        {activeProd && (
-          <ProductCard
-            product={activeProd}
-            productSteps={activeSteps}
-            factories={state.factories}
-            members={state.members}
-            isOverlay
-          />
-        )}
-      </DragOverlay>
-    </DndContext>
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--text-mute)', marginTop: 4 }}>
+            💡 กดวงกลมมุมซ้ายเพื่ออัพเดต Process เสร็จสิ้น
+          </div>
+        </Modal>
+      )}
+    </div>
   );
 }
