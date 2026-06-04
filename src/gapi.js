@@ -186,22 +186,42 @@ export async function ensureSheetTabs(spreadsheetId, token) {
 // ── Drive API v3 ──────────────────────────────────────────────────────────────
 
 export async function driveUpload(file, folderId, token) {
-  const meta = { name: file.name, mimeType: file.type || 'application/octet-stream' };
-  if (folderId) meta.parents = [folderId];
+  // Inner helper — upload with or without a parent folder
+  const doUpload = async (parentId) => {
+    const meta = { name: file.name, mimeType: file.type || 'application/octet-stream' };
+    if (parentId) meta.parents = [parentId];
 
-  const form = new FormData();
-  form.append('metadata', new Blob([JSON.stringify(meta)], { type: 'application/json' }));
-  form.append('file', file);
+    const form = new FormData();
+    form.append('metadata', new Blob([JSON.stringify(meta)], { type: 'application/json' }));
+    form.append('file', file);
 
-  const res = await fetch(
-    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink',
-    { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form },
-  );
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message || `Drive upload failed ${res.status}`);
+    const res = await fetch(
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink',
+      { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form },
+    );
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      const msg = err?.error?.message || `Drive upload failed ${res.status}`;
+      // Signal that the folder was inaccessible so we can retry without it
+      if (res.status === 403 && parentId) {
+        const e = new Error(msg);
+        e.folderDenied = true;
+        throw e;
+      }
+      throw new Error(msg);
+    }
+    return res.json(); // { id, name, webViewLink }
+  };
+
+  try {
+    return await doUpload(folderId || null);
+  } catch (e) {
+    if (e.folderDenied) {
+      // Folder is shared read-only or not accessible — upload to the user's Drive root
+      return await doUpload(null);
+    }
+    throw e;
   }
-  return res.json(); // { id, name, webViewLink }
 }
 
 // Public thumbnail URL (works for files shared "anyone with link can view")
