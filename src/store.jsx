@@ -161,9 +161,6 @@ export function StoreProvider({ children }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }, [state]);
 
-  // Track syncStatus in a ref so polling interval can read it without re-registering
-  const syncStatusRef = useRef('idle');
-  useEffect(() => { syncStatusRef.current = syncStatus; }, [syncStatus]);
 
   // ── Manual reload from Sheets (exposed in context) ───────────────────────
   const reloadFromSheets = useCallback(async () => {
@@ -210,40 +207,7 @@ export function StoreProvider({ children }) {
       });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 3. Auto-poll: re-read Sheets every 30 s to pick up other users' changes
-  useEffect(() => {
-    const poll = async () => {
-      // Don't poll while a write is in-flight or a load is happening
-      if (syncStatusRef.current !== 'synced') return;
-      const token = getToken();
-      const { spreadsheetId } = getConfig();
-      if (!token || !spreadsheetId) return;
-
-      skipSync.current = true;
-      try {
-        const sheetsData = await readFromSheets(spreadsheetId, token);
-        dispatch({ type: 'LOAD_FROM_SHEETS', payload: sheetsData });
-        setSyncStatus('synced');
-      } catch (err) {
-        console.warn('[store] Auto-poll failed:', err.message);
-      } finally {
-        setTimeout(() => { skipSync.current = false; }, 500);
-      }
-    };
-
-    const interval = setInterval(poll, 30000); // every 30 seconds
-
-    // Also poll immediately when the user switches back to this tab
-    const onVisible = () => { if (document.visibilityState === 'visible') poll(); };
-    document.addEventListener('visibilitychange', onVisible);
-
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', onVisible);
-    };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // 5. Debounced sync to Sheets on every state change
+  // 3. Debounced sync to Sheets on every state change
   useEffect(() => {
     if (skipSync.current) return;
 
