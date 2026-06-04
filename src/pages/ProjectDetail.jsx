@@ -18,6 +18,12 @@ export default function ProjectDetail() {
   const [statusModal, setStatusModal] = useState(null); // { stepId, currentStatus }
   const [newStatus, setNewStatus] = useState('');
   const [stepNote, setStepNote] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+
+  const handleDelete = () => {
+    dispatch({ type: 'DELETE_PROJECT', id });
+    navigate('/');
+  };
 
   const project = state.projects.find(p => p.id === id);
   if (!project) {
@@ -65,6 +71,13 @@ export default function ProjectDetail() {
             <div className="page-sub">{project.client} · สร้างเมื่อ {formatDate(project.created_at)}</div>
           </div>
           <div className="gap-8">
+            <button
+              className="btn btn-ghost"
+              style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }}
+              onClick={() => setDeleteConfirm(true)}
+            >
+              🗑 ลบ Project
+            </button>
             <button className="btn btn-ghost" onClick={() => navigate(`/projects/${id}/edit`)}>แก้ไข</button>
             <button className="btn" onClick={() => navigate(`/projects/${id}/edit?addProduct=1`)}>+ เพิ่มสินค้า</button>
           </div>
@@ -244,6 +257,33 @@ export default function ProjectDetail() {
           );
         })
       ))}
+
+      {/* Delete confirmation modal */}
+      {deleteConfirm && (
+        <Modal
+          title="🗑 ลบ Project"
+          onClose={() => setDeleteConfirm(false)}
+          footer={
+            <>
+              <button className="btn btn-ghost" onClick={() => setDeleteConfirm(false)}>ยกเลิก</button>
+              <button
+                className="btn"
+                style={{ background: 'var(--danger)', borderColor: 'var(--danger)' }}
+                onClick={handleDelete}
+              >
+                ลบถาวร
+              </button>
+            </>
+          }
+        >
+          <p style={{ margin: 0, lineHeight: 1.7 }}>
+            ต้องการลบ <strong>"{project.name}"</strong> ใช่หรือไม่?
+          </p>
+          <p style={{ margin: '8px 0 0', color: 'var(--danger)', fontSize: 13 }}>
+            ⚠ ข้อมูลสินค้าและ steps ทั้งหมดใน project นี้จะถูกลบถาวร ไม่สามารถกู้คืนได้
+          </p>
+        </Modal>
+      )}
 
       {/* Status update modal */}
       {statusModal && (
