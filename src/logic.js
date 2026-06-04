@@ -38,13 +38,30 @@ export function getDaysElapsed(step) {
 }
 
 export function isStepOverdue(step) {
-  if (step.status === 'delivered' || !step.started_at) return false;
+  if (step.status === 'delivered') return false;
+  // If planned end date exists → compare against today
+  if (step.plan_end) {
+    return Date.now() > new Date(step.plan_end + 'T23:59:59').getTime();
+  }
+  // Fallback: elapsed-days logic
+  if (!step.started_at) return false;
   return getDaysElapsed(step) > step.expected_days;
 }
 
 export function getDaysOverdue(step) {
+  if (step.plan_end) {
+    const ms = Date.now() - new Date(step.plan_end + 'T23:59:59').getTime();
+    return Math.max(0, Math.ceil(ms / 86400000));
+  }
   const elapsed = getDaysElapsed(step);
   return Math.max(0, elapsed - step.expected_days);
+}
+
+/** Days between two date strings (inclusive). e.g. May 12→19 = 8 days */
+export function calcPlanDays(start, end) {
+  if (!start || !end) return 0;
+  const diff = Math.round((new Date(end) - new Date(start)) / 86400000);
+  return Math.max(1, diff + 1);
 }
 
 // Build a 7-segment progress bar state for a list of steps (sorted by order).

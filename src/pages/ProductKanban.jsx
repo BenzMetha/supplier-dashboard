@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useStore } from '../store.jsx';
 import { Modal } from '../components.jsx';
-import { STATUS_LABELS, STATUS_CSS } from '../logic.js';
+import { STATUS_LABELS, STATUS_CSS, formatDate } from '../logic.js';
 import { driveThumbnail } from '../gapi.js';
 
 export default function ProductKanban({ projectId }) {
@@ -141,11 +141,15 @@ export default function ProductKanban({ projectId }) {
                             {member.name}
                           </span>
                         )}
-                        {step.expected_days && (
+                        {step.plan_start && step.plan_end ? (
+                          <span className="task-meta-item mono" style={{ color: 'var(--text-mute)' }}>
+                            📅 {formatDate(step.plan_start)} → {formatDate(step.plan_end)}
+                          </span>
+                        ) : step.expected_days ? (
                           <span className="task-meta-item mono" style={{ color: 'var(--text-mute)' }}>
                             {step.expected_days} วัน
                           </span>
-                        )}
+                        ) : null}
                         {step.note && (
                           <span className="task-meta-item" style={{ color: 'var(--text-mute)', fontStyle: 'italic' }}>
                             "{step.note}"

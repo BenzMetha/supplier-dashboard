@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useStore } from '../store.jsx';
-import { genId } from '../logic.js';
+import { genId, calcPlanDays } from '../logic.js';
 import { getToken, getConfig, driveUpload, driveThumbnail, driveViewLink, makeFilePublic } from '../gapi.js';
 import { Modal } from '../components.jsx';
 
@@ -12,7 +12,9 @@ const EMPTY_STEP = () => ({
   step_name: '',
   factory_id: '',
   assignee_id: '',
-  expected_days: '',
+  expected_days: 7,
+  plan_start: '',
+  plan_end: '',
   status: 'draft',
   started_at: null,
   note: '',
@@ -91,6 +93,14 @@ export default function ProjectForm() {
       i !== pIdx ? p : {
         ...p,
         steps: p.steps.map((s, j) => j !== sIdx ? s : { ...s, [field]: val }),
+      }
+    ));
+
+  const updateStepMulti = (pIdx, sIdx, updates) =>
+    setProducts(ps => ps.map((p, i) =>
+      i !== pIdx ? p : {
+        ...p,
+        steps: p.steps.map((s, j) => j !== sIdx ? s : { ...s, ...updates }),
       }
     ));
 
@@ -194,6 +204,8 @@ export default function ProjectForm() {
             factory_id: s.factory_id || null,
             assignee_id: s.assignee_id || null,
             expected_days: s.expected_days ? Number(s.expected_days) : 7,
+            plan_start: s.plan_start || '',
+            plan_end: s.plan_end || '',
             status: s.status || 'draft',
             started_at: s.started_at || null,
             note: s.note || '',
@@ -452,7 +464,7 @@ export default function ProjectForm() {
                 <div>ชื่อ Step</div>
                 <div>โรงงาน</div>
                 <div>ผู้รับผิดชอบ</div>
-                <div>กำหนด (วัน)</div>
+                <div>ช่วงเวลา (เริ่ม → จบ)</div>
                 <div />
               </div>
 
@@ -502,12 +514,34 @@ export default function ProjectForm() {
                       onClick={() => openQuickAdd('member', pIdx, sIdx)}
                     >+</button>
                   </div>
-                  <input
-                    className="form-input mono"
-                    placeholder="7"
-                    value={step.expected_days}
-                    onChange={e => updateStep(pIdx, sIdx, 'expected_days', e.target.value)}
-                  />
+                  <div className="step-date-range">
+                    <input
+                      className="form-input"
+                      type="date"
+                      value={step.plan_start}
+                      onChange={e => {
+                        const newStart = e.target.value;
+                        const days = newStart && step.plan_end ? calcPlanDays(newStart, step.plan_end) : step.expected_days;
+                        updateStepMulti(pIdx, sIdx, { plan_start: newStart, expected_days: days });
+                      }}
+                    />
+                    <input
+                      className="form-input"
+                      type="date"
+                      value={step.plan_end}
+                      min={step.plan_start || undefined}
+                      onChange={e => {
+                        const newEnd = e.target.value;
+                        const days = step.plan_start && newEnd ? calcPlanDays(step.plan_start, newEnd) : step.expected_days;
+                        updateStepMulti(pIdx, sIdx, { plan_end: newEnd, expected_days: days });
+                      }}
+                    />
+                    {step.plan_start && step.plan_end && (
+                      <div className="step-date-days">
+                        {calcPlanDays(step.plan_start, step.plan_end)} วัน
+                      </div>
+                    )}
+                  </div>
                   <span
                     className="remove-x"
                     onClick={() => prod.steps.length > 1 && removeStep(pIdx, sIdx)}

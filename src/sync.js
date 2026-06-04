@@ -49,13 +49,15 @@ export const SCHEMA = {
   steps: {
     tab: 'Steps',
     headers: ['id','product_id','order','step_name','factory_id','assignee_id',
-              'status','expected_days','started_at','note'],
+              'status','expected_days','started_at','note','plan_start','plan_end'],
     ser: s => ({
       ...s,
       factory_id:    s.factory_id   ?? '',
       assignee_id:   s.assignee_id  ?? '',
       started_at:    s.started_at   ?? '',
       note:          s.note         ?? '',
+      plan_start:    s.plan_start   ?? '',
+      plan_end:      s.plan_end     ?? '',
     }),
     de: r => ({
       id:            r.id,
@@ -68,6 +70,8 @@ export const SCHEMA = {
       expected_days: Number(r.expected_days) || 7,
       started_at:    r.started_at   || null,
       note:          r.note         || '',
+      plan_start:    r.plan_start   || '',
+      plan_end:      r.plan_end     || '',
     }),
   },
 

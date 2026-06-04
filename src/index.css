@@ -440,7 +440,7 @@ body {
 }
 .step-form-head {
   display: grid;
-  grid-template-columns: 1fr 1.5fr 1fr 80px 30px;
+  grid-template-columns: 1fr 1.5fr 1fr 210px 30px;
   gap: 10px;
   font-size: 11px;
   color: var(--text-mute);
@@ -450,10 +450,26 @@ body {
 }
 .step-form-row {
   display: grid;
-  grid-template-columns: 1fr 1.5fr 1fr 80px 30px;
+  grid-template-columns: 1fr 1.5fr 1fr 210px 30px;
   gap: 10px;
   margin-bottom: 8px;
-  align-items: center;
+  align-items: start;
+}
+.step-date-range {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.step-date-range .form-input {
+  font-size: 12px;
+  padding: 5px 8px;
+}
+.step-date-days {
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 600;
+  text-align: center;
+  padding: 2px 0;
 }
 .add-link   { color: var(--accent); font-size: 13px; cursor: pointer; margin-top: 8px; display: inline-block; }
 .add-link:hover { opacity: 0.8; }
